@@ -1,0 +1,8 @@
+stages:
+  - publish
+  - release
+
+include:
+  # === on semver tag ===
+  - component: ${CI_SERVER_FQDN}/kulturpool/development-operations/ci-cd/component-catalogue/publish-poetry-package/publish-poetry-package-on-tag@1
+  - component: ${CI_SERVER_FQDN}/kulturpool/development-operations/ci-cd/component-catalogue/release-project/release-from-tag@1
