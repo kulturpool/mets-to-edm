@@ -10,8 +10,9 @@ packages = [{include = "mets_to_edm"}]
 [tool.poetry.dependencies]
 python = "^3.12"
 lxml = "^5.2.2"
-edmlib = { version = "^2.2.0", source = "edmlib" }
+edmlib = { version = "^2.5.2", source = "edmlib" }
 requests = "^2.32.3"
+types-lxml = "^2025.8.25"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"

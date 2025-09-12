@@ -1,6 +1,7 @@
 import logging
 import os
 from collections import defaultdict
+from typing import Any, Callable, Optional, Type, Dict, List, Tuple, Union
 
 from edmlib import (
     MixedValuesList,
@@ -32,8 +33,14 @@ from .utilities import (
 XSL_FILE = os.path.join(os.path.dirname(__file__), "MODSMETS2EDM.xsl")
 
 
-def retry_with_host_data(func):
-    def wrapper_retry_with_host_data(cls, dmd_sec, host_dmd_sec=None, *args, **kwargs):
+def retry_with_host_data(func: Callable[..., Any]) -> Callable[..., Any]:
+    def wrapper_retry_with_host_data(
+        cls: Type["MetsToEdmMapper"],
+        dmd_sec: _Element,
+        host_dmd_sec: Optional[_Element] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
         if values := func(cls, dmd_sec=dmd_sec, *args, **kwargs):
             return values
         elif host_dmd_sec is not None:
@@ -82,7 +89,7 @@ class MetsToEdmMapper:
     #    div_id = logical_div.get("ID")
 
     @classmethod
-    def get_main_structmap_div(cls, record: _Element):
+    def get_main_structmap_div(cls, record: _Element) -> _Element:
         possible_divs = record.xpath(
             "mets:structMap[@TYPE='LOGICAL']//mets:div[@DMDID and not(mets:mptr)]",
             namespaces=METS_MODS_NAMESPACES,
@@ -107,7 +114,7 @@ class MetsToEdmMapper:
         return div[0]
 
     @classmethod
-    def get_mods_part(cls, record: _Element, dmdid):
+    def get_mods_part(cls, record: _Element, dmdid: str) -> _Element:
         dmd_secs = record.xpath(
             f"mets:dmdSec[@ID='{dmdid}']/mets:mdWrap/mets:xmlData/mods:mods[1]",
             namespaces=METS_MODS_NAMESPACES,
@@ -116,7 +123,9 @@ class MetsToEdmMapper:
         return dmd_secs[0]
 
     @classmethod
-    def get_host_dmd_sec(cls, record, dmd_sec, logical_main_div):
+    def get_host_dmd_sec(
+        cls, record: _Element, dmd_sec: _Element, logical_main_div: _Element
+    ) -> Optional[_Element]:
         host_dmd_sec = None
         if possible_hosts := dmd_sec.xpath(
             "mods:relatedItem[@type='host']", namespaces=METS_MODS_NAMESPACES
@@ -131,14 +140,14 @@ class MetsToEdmMapper:
         return host_dmd_sec
 
     @classmethod
-    def get_amd_part(cls, record: _Element, amdid):
+    def get_amd_part(cls, record: _Element, amdid: str) -> list[_Element]:
         return record.xpath(
             f"mets:amdSec[@ID='{amdid}'][1]",
             namespaces=METS_MODS_NAMESPACES,
         )
 
     @classmethod
-    def process_title_tag(cls, title_element) -> tuple[str, Lit]:
+    def process_title_tag(cls, title_element: _Element) -> tuple[str, Lit]:
         # TODO: consider whitespace handling and separators
         title = join_tag_texts_xpath(title_element, "mods:nonSort")
         title += join_tag_texts_xpath(title_element, "mods:title")
@@ -162,7 +171,9 @@ class MetsToEdmMapper:
             return ("dc_title", Lit(value=title))
 
     @classmethod
-    def get_titles(cls, dmd_sec: _Element, host_dmd_sec: _Element | None = None):
+    def get_titles(
+        cls, dmd_sec: _Element, host_dmd_sec: Optional[_Element] = None
+    ) -> Dict[str, List[Lit]]:
         title_properties = {"dcterms_alternative": [], "dc_title": []}
         titles = dmd_sec.xpath(
             "mods:titleInfo[not(@type)]", namespaces=METS_MODS_NAMESPACES
@@ -243,17 +254,21 @@ class MetsToEdmMapper:
         ) + literal_list_from_xpath(dmd_sec, "mods:abstract")
 
     @classmethod
-    def get_identifiers(cls, dmd_sec: _Element) -> MixedValuesList:
+    def get_identifiers(cls, dmd_sec: _Element) -> List[Lit]:
         return literal_list_from_xpath(
             dmd_sec, "mods:recordInfo/mods:recordIdentifier"
         ) + literal_list_from_xpath(dmd_sec, "mods:identifier")
 
     @classmethod
-    def get_edm_type(cls, dmd_sec: _Element, logical_main_div=None) -> Lit:
+    def get_edm_type(
+        cls, dmd_sec: _Element, logical_main_div: Optional[_Element] = None
+    ) -> Lit:
         return Lit(value="TEXT")
 
     @classmethod
-    def parse_mods_subjects(cls, dmd_sec: _Element, context_objects: CONTEXT_DICT_TYPE):
+    def parse_mods_subjects(
+        cls, dmd_sec: _Element, context_objects: CONTEXT_DICT_TYPE
+    ) -> Dict[str, List[Union[Lit, Ref]]]:
         subjects = dmd_sec.findall("mods:subject", namespaces=METS_MODS_NAMESPACES)
         edm_values: dict[str, list[Lit | Ref]] = defaultdict(list)
         for subject in subjects:
@@ -298,7 +313,9 @@ class MetsToEdmMapper:
         ) + literal_list_from_xpath(dmd_sec, "mods:extension/intranda:Topic")
 
     @classmethod
-    def parse_logical_main_div_type(cls, logical_main_div: _Element | None = None):
+    def parse_logical_main_div_type(
+        cls, logical_main_div: Optional[_Element] = None
+    ) -> List[Lit]:
         if logical_main_div is not None and logical_main_div.get("TYPE"):
             type_from_div = [Lit(value=logical_main_div.get("TYPE"))]
             return type_from_div
@@ -306,7 +323,9 @@ class MetsToEdmMapper:
             return []
 
     @classmethod
-    def get_types(cls, dmd_sec: _Element, logical_main_div=None) -> MixedValuesList:
+    def get_types(
+        cls, dmd_sec: _Element, logical_main_div: Optional[_Element] = None
+    ) -> MixedValuesList:
         # intranda extension:
         return (
             literal_list_from_xpath(dmd_sec, "mods:extension/intranda:ObjectType")
@@ -349,7 +368,7 @@ class MetsToEdmMapper:
         )
 
     @classmethod
-    def get_languages(cls, dmd_sec: _Element) -> list[Lit]:
+    def get_languages(cls, dmd_sec: _Element) -> List[str]:
         langs = dmd_sec.xpath(
             "mods:language/mods:languageTerm/text()", namespaces=METS_MODS_NAMESPACES
         )
@@ -357,7 +376,9 @@ class MetsToEdmMapper:
         return langs
 
     @classmethod
-    def parse_mods_date(cls, dmd_sec: _Element, date_element_name: str):
+    def parse_mods_date(
+        cls, dmd_sec: _Element, date_element_name: str
+    ) -> Optional[List[Lit]]:
         dates = dmd_sec.xpath(date_element_name, namespaces=METS_MODS_NAMESPACES)
         start = ""
         end = ""
@@ -381,18 +402,18 @@ class MetsToEdmMapper:
             return None
 
     @classmethod
-    def get_issued(cls, dmd_sec: _Element) -> list[Lit]:
+    def get_issued(cls, dmd_sec: _Element) -> Optional[List[Lit]]:
         return cls.parse_mods_date(dmd_sec, "mods:originInfo/mods:dateIssued")
 
     @classmethod
-    def get_created(cls, dmd_sec: _Element) -> list[Lit]:
+    def get_created(cls, dmd_sec: _Element) -> Optional[List[Lit]]:
         return cls.parse_mods_date(dmd_sec, "mods:originInfo/mods:dateCreated")
 
     @classmethod
     @retry_with_host_data
     def get_publishers(
-        cls, dmd_sec: _Element, host_dmd_sec: _Element = None
-    ) -> list[Lit]:
+        cls, dmd_sec: _Element, host_dmd_sec: Optional[_Element] = None
+    ) -> List[Lit]:
         return literal_list_from_xpath(dmd_sec, "mods:originInfo/mods:publisher")
 
     @classmethod
@@ -424,7 +445,7 @@ class MetsToEdmMapper:
         )
 
     @classmethod
-    def parse_mods_name(cls, name_tag: _Element) -> Lit | EDM_Agent:
+    def parse_mods_name(cls, name_tag: _Element) -> Union[Lit, EDM_Agent]:
         uri = name_tag.get("valueURI")
         if not uri:
             uri = name_tag.get("nameIdentifier")
@@ -451,7 +472,7 @@ class MetsToEdmMapper:
             )
 
     @classmethod
-    def get_edm_property_for_roles(cls, roles):
+    def get_edm_property_for_roles(cls, roles: List[str]) -> Optional[str]:
         edm_property = "dc_contributor"
         for role_entry in roles:
             if role_entry in cls.IGNORE_ROLES:
@@ -544,7 +565,9 @@ class MetsToEdmMapper:
         raise Exception("no corresponding field for edm:rights found")
 
     @classmethod
-    def get_data_provider(cls, dmd_sec, amd_sec, default=None):
+    def get_data_provider(
+        cls, dmd_sec: _Element, amd_sec: _Element, default: Optional[str] = None
+    ) -> Lit:
         if default:
             return Lit(value=default)
 
@@ -555,7 +578,7 @@ class MetsToEdmMapper:
         return Lit(value=data_provider.text)
 
     @classmethod
-    def get_is_part_of(cls, dmd_sec):
+    def get_is_part_of(cls, dmd_sec: _Element) -> List[Any]:
         return []
 
     @classmethod
@@ -565,7 +588,7 @@ class MetsToEdmMapper:
         return []
 
     @classmethod
-    def get_current_location(cls, dmd_sec):
+    def get_current_location(cls, dmd_sec: _Element) -> Optional[Lit]:
         location = join_tag_texts_xpath(
             dmd_sec, "mods:location[1]/mods:physicalLocation[1]"
         )
@@ -576,7 +599,7 @@ class MetsToEdmMapper:
         return Lit(value=full_location) if full_location else None
 
     @classmethod
-    def get_iiif_image_api_service(cls, url) -> SVCS_Service | None:
+    def get_iiif_image_api_service(cls, url: str) -> Optional[SVCS_Service]:
         """Override in Institution specific implementation to generate the SVCS_Service object from a given url
 
         Args:
@@ -588,7 +611,7 @@ class MetsToEdmMapper:
         return None
 
     @classmethod
-    def get_iiif_manifest_url(cls, amd_sec) -> list[Ref] | None:
+    def get_iiif_manifest_url(cls, amd_sec: _Element) -> Optional[List[Ref]]:
         iiif_manifest = amd_sec.find(
             "mets:digiprovMD/mets:mdWrap/mets:xmlData/dv:links/dv:iiif",
             namespaces=METS_MODS_NAMESPACES,
@@ -598,7 +621,9 @@ class MetsToEdmMapper:
         return [Ref(value=iiif_manifest.text)]
 
     @classmethod
-    def query_url_for_div(cls, div: _Element, file_sec: _Element, file_grp):
+    def query_url_for_div(
+        cls, div: _Element, file_sec: _Element, file_grp: str
+    ) -> Optional[str]:
         fptr_id = xpath_first_match(
             div,
             f"mets:fptr[contains(@FILEID,'{file_grp}')]/@FILEID",
@@ -618,9 +643,9 @@ class MetsToEdmMapper:
         cls,
         physical_div: _Element,
         file_sec: _Element,
-        xpath_query_pages="mets:div[@TYPE='page']",
-        file_grp="DEFAULT",
-    ) -> list[str]:
+        xpath_query_pages: str = "mets:div[@TYPE='page']",
+        file_grp: str = "DEFAULT",
+    ) -> List[str]:
         urls = []
         if physical_div is not None:
             page_divs = physical_div.xpath(
@@ -634,7 +659,7 @@ class MetsToEdmMapper:
         return urls
 
     @classmethod
-    def get_object(cls, logical_div: _Element, file_sec: _Element) -> Ref | None:
+    def get_object(cls, logical_div: _Element, file_sec: _Element) -> Optional[Ref]:
         thumbnail_id = (
             xpath_first_match(
                 logical_div, "mets:fptr[contains(@FILEID,'FRONTIMAGE')]/@FILEID"
@@ -663,7 +688,7 @@ class MetsToEdmMapper:
         logical_div: _Element,
         file_sec: _Element,
         context_objects: CONTEXT_DICT_TYPE,
-    ):
+    ) -> Dict[str, Any]:
         results = {
             "edm_hasView": [],
             "edm_isShownBy": None,
@@ -718,7 +743,9 @@ class MetsToEdmMapper:
         return results
 
     @classmethod
-    def process_record(cls, record: _Element, data_provider=None) -> EDM_Record:
+    def process_record(
+        cls, record: _Element, data_provider: Optional[str] = None
+    ) -> EDM_Record:
         context_objects: CONTEXT_DICT_TYPE = {}
 
         record = record.xpath("//mets:mets", namespaces=METS_MODS_NAMESPACES)[0]
