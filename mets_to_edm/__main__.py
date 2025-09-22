@@ -8,6 +8,11 @@ def main():
         description="Process a file with a specified data provider."
     )
     parser.add_argument("file", type=str, help="Path to the input file")
+    parser.add_argument(
+        "provider",
+        type=str,
+        help="Name of the edm:provider (institution providing the data to Europeana)",
+    )
     parser.add_argument("--data-provider", type=str, help="Name of the data provider")
 
     args = parser.parse_args()
@@ -17,7 +22,7 @@ def main():
             tree = etree.parse(f)
             print(
                 MetsToEdmMapper.process_record(
-                    tree, data_provider=args.data_provider
+                    tree, edm_provider=args.provider, data_provider=args.data_provider
                 ).serialize()
             )
     except (etree.XMLSyntaxError, FileNotFoundError) as e:

@@ -29,6 +29,8 @@ from .utilities import (
     context_dict_to_edm_record_dict,
 )
 
+logger = logging.getLogger("mets-to-edm")
+
 
 XSL_FILE = os.path.join(os.path.dirname(__file__), "MODSMETS2EDM.xsl")
 
@@ -277,7 +279,7 @@ class MetsToEdmMapper:
                     subject_subelement.tag
                 ]
                 if edm_property is None:
-                    logging.warning(
+                    logger.warning(
                         f"unimplemented mods:subject subelement {subject_subelement.tag}"
                     )
                     continue
@@ -484,7 +486,7 @@ class MetsToEdmMapper:
             elif role_entry in cls.SUBJECT_ROLES:
                 edm_property = "dc_subject"
             elif role_entry not in cls.OTHER_ROLES:
-                logging.warning(
+                logger.warning(
                     f'Unknown Role: "{role_entry}", falling back to contributor'
                 )
         return edm_property
@@ -578,6 +580,13 @@ class MetsToEdmMapper:
         return Lit(value=data_provider.text)
 
     @classmethod
+    def get_provider(cls, default: Optional[str]) -> Lit:
+        assert (
+            default
+        ), "Missing value for edm:provider. Either override get_provider or provide a default value to process_record."
+        return Lit(value=default)
+
+    @classmethod
     def get_is_part_of(cls, dmd_sec: _Element) -> List[Any]:
         return []
 
@@ -603,10 +612,10 @@ class MetsToEdmMapper:
         """Override in Institution specific implementation to generate the SVCS_Service object from a given url
 
         Args:
-            url:
+            url: URL of a WebResource
 
         Returns:
-
+            SVCS_Service object or None if no IIIF Image API service can be extracted from the url
         """
         return None
 
@@ -744,8 +753,19 @@ class MetsToEdmMapper:
 
     @classmethod
     def process_record(
-        cls, record: _Element, data_provider: Optional[str] = None
+        cls,
+        record: _Element,
+        edm_provider: Optional[str] = None,
+        data_provider: Optional[str] = None,
     ) -> EDM_Record:
+        """Maps a METS/MODS record to EDM using class methods that can be overwritten to adapt the mapping logic
+
+        Args:
+            record: METS/MODS record as lxml Element or ElementTree
+            edm_provider: default value for edm:provider (Institution providing the data to Europeana). Mandatory if not overwritten in a subclass by overriding get_provider.
+            data_provider: default value for edm:dataProvider (Institution providing the original data), if not provided in the METS/MODS record. Would otherwise be extracted from the amdSec using "mets:rightsMD/mets:mdWrap/mets:xmlData/dv:rights/dv:owner"
+        """
+
         context_objects: CONTEXT_DICT_TYPE = {}
 
         record = record.xpath("//mets:mets", namespaces=METS_MODS_NAMESPACES)[0]
@@ -810,7 +830,7 @@ class MetsToEdmMapper:
             edm_currentLocation=cls.get_current_location(dmd_sec),
         )
 
-        provider = "Kulturpool"
+        provider = cls.get_provider(default=edm_provider)
         aggregation = ORE_Aggregation(
             id=Ref(value="2"),  # TODO: id
             edm_rights=cls.get_edm_rights(dmd_sec),
@@ -818,7 +838,7 @@ class MetsToEdmMapper:
             edm_dataProvider=cls.get_data_provider(
                 dmd_sec, amd_sec, default=data_provider
             ),
-            edm_provider=Lit(value=provider),
+            edm_provider=provider,
             **cls.get_webresource_urls(
                 amd_sec, physical_main_div, logical_main_div, filesec, context_objects
             ),

@@ -46,8 +46,11 @@ print(edm_xml)
 ### From the Command Line
 
 ```sh
-python -m mets_to_edm example.xml [--data-provider "Data Provider"]
+python -m mets_to_edm example.xml "Provider Name" [--data-provider "Data Provider"]
 ```
+
+- `"Provider Name"`: the institution name to be filled in as edm:provider (the aggregator providing the data to europeana)
+- `"Data Provider"`: the institution name to be filled in as edm:dataProvider (the Organisation where the data originates from). Optional as it will otherwise be extracted from the amdSec using XPath "mets:rightsMD/mets:mdWrap/mets:xmlData/dv:rights/dv:owner"
 
 ## Customizing the Mapping
 
@@ -71,6 +74,8 @@ class MyMapper(MetsToEdmMapper):
 # Usage:
 # edmlib_record = MyCustomMapper.process_record(tree)
 ```
+
+For more examples have a look at the examples directory.
 
 ## Further Information
 
