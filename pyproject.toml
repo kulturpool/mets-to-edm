@@ -2,10 +2,11 @@
 name = "mets-to-edm"
 # handled via git tags:
 version = "0.0.0"
-description = ""
-authors = ["None"]
+description = "Modular mapping of METS/MODS data to EDM (Europeana Data Model), providing comprehensive transformation of METS/MODS XML structures into Pydantic-based EDM classes and properties."
+authors = ["Kulturpool <info@kulturpool.at>"]
+license = "MIT"
 readme = "README.md"
-packages = [{include = "mets_to_edm"}]
+packages = [{ include = "./mets_to_edm" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"

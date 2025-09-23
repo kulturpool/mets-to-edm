@@ -1,3 +1,0 @@
-[submodule ".devcontainer"]
-	path = .devcontainer
-	url = git@git.kpool.at:kulturpool/development/devcontainer-templates/python-package.git
