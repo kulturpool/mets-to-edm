@@ -1,0 +1,41 @@
+{
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/kupo/.ssh,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.ssh,target=${localEnv:HOME}/.ssh,type=bind,consistency=cached"
+  ],
+  "dockerComposeFile": "compose.yml",
+  "service": "mets-to-edm-devcontainer",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "tamasfe.even-better-toml",
+        "ms-azuretools.vscode-docker",
+        "esbenp.prettier-vscode",
+        "redhat.vscode-xml",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash"
+          }
+        },
+        "python.analysis.packageIndexDepths": [
+          {
+            "name": "",
+            "depth": 10,
+            "includeAllSymbols": true
+          }
+        ],
+        "python.analysis.userFileIndexingLimit": 5000
+      }
+    }
+  },
+  "remoteUser": "kupo",
+  "postCreateCommand": "python -m pip install --upgrade pip setuptools wheel"
+}

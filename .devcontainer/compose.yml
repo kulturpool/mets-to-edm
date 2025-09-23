@@ -1,0 +1,16 @@
+services:
+  mets-to-edm-devcontainer:
+    image: registry.kpool.at/kulturpool/development-operations/docker-images/python-poetry/python-poetry:2.1.1
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    pull_policy: never
+    volumes:
+      - ../../:/workspaces/
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      - DEV_CONTAINER=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
