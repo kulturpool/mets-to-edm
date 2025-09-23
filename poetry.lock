@@ -189,13 +189,13 @@ files = [
 
 [[package]]
 name = "click"
-version = "8.2.1"
+version = "8.3.0"
 description = "Composable command line interface toolkit"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "click-8.2.1-py3-none-any.whl", hash = "sha256:61a3265b914e850b85317d0b3109c7f8cd35a670f963866005d6ef1d5175a12b"},
-    {file = "click-8.2.1.tar.gz", hash = "sha256:27c491cc05d968d271d5a1db13e3b5a184636d9d930f148c50b038f0d0646202"},
+    {file = "click-8.3.0-py3-none-any.whl", hash = "sha256:9b9f285302c6e3064f4330c05f05b81945b2a39544279343e6e7c5f27a9baddc"},
+    {file = "click-8.3.0.tar.gz", hash = "sha256:e7b8232224eba16f4ebe410c25ced9f7875cb5f3263ffc93cc3e8da705e229c4"},
 ]
 
 [package.dependencies]
@@ -225,13 +225,13 @@ files = [
 
 [[package]]
 name = "edmlib"
-version = "2.5.2"
-description = "Python utilities for working with the EDM (Europeana Data Model). Maps all EDM-classes and properties to pydantic models and attributes."
+version = "2.5.3"
+description = "Provides comprehensive mapping of all EDM classes and properties to Pydantic models and attributes, enabling robust data validation and serialization. Includes parsing capabilities for XML EDM files, allowing seamless conversion of XML data into Python objects for further processing and analysis. "
 optional = false
-python-versions = ">=3.10,<4.0.0"
+python-versions = "<4.0.0,>=3.10"
 files = [
-    {file = "edmlib-2.5.2-py3-none-any.whl", hash = "sha256:ce6f28df962695ddcf849389a74c1a1fa5b5a9b38556c29606f01d098dfbc432"},
-    {file = "edmlib-2.5.2.tar.gz", hash = "sha256:c8e297e0bf08db9d7fab82305e3ffb3783d49979ead0245653fafdc7f33e665b"},
+    {file = "edmlib-2.5.3-py3-none-any.whl", hash = "sha256:eb8f7151eb26a0a23f16d2ec72a705913ac483257af3b4b34836372b85b4a401"},
+    {file = "edmlib-2.5.3.tar.gz", hash = "sha256:65ba2f694f879431b1cfc111765fb788d647de45aa23793f293144a0911c97a1"},
 ]
 
 [package.dependencies]
@@ -241,11 +241,6 @@ pydantic = ">=2.10.3,<3.0.0"
 pyld = ">=2.0.3,<3.0.0"
 rdflib = ">=7.0.0,<8.0.0"
 requests = ">=2.32.3,<3.0.0"
-
-[package.source]
-type = "legacy"
-url = "https://git.kpool.at/api/v4/projects/359/packages/pypi/simple"
-reference = "edmlib"
 
 [[package]]
 name = "frozendict"
@@ -637,13 +632,13 @@ testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pydantic"
-version = "2.11.7"
+version = "2.11.9"
 description = "Data validation using Python type hints"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pydantic-2.11.7-py3-none-any.whl", hash = "sha256:dde5df002701f6de26248661f6835bbe296a47bf73990135c7d07ce741b9623b"},
-    {file = "pydantic-2.11.7.tar.gz", hash = "sha256:d989c3c6cb79469287b1569f7447a17848c998458d49ebe294e975b9baf0f0db"},
+    {file = "pydantic-2.11.9-py3-none-any.whl", hash = "sha256:c42dd626f5cfc1c6950ce6205ea58c93efa406da65f479dcb4029d5934857da2"},
+    {file = "pydantic-2.11.9.tar.gz", hash = "sha256:6b8ffda597a14812a7975c90b82a8a2e777d9257aba3453f973acd3c032a18e2"},
 ]
 
 [package.dependencies]
@@ -805,13 +800,13 @@ requests = ["requests"]
 
 [[package]]
 name = "pyparsing"
-version = "3.2.3"
-description = "pyparsing module - Classes and methods to define and execute parsing grammars"
+version = "3.2.5"
+description = "pyparsing - Classes and methods to define and execute parsing grammars"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pyparsing-3.2.3-py3-none-any.whl", hash = "sha256:a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf"},
-    {file = "pyparsing-3.2.3.tar.gz", hash = "sha256:b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be"},
+    {file = "pyparsing-3.2.5-py3-none-any.whl", hash = "sha256:e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e"},
+    {file = "pyparsing-3.2.5.tar.gz", hash = "sha256:2df8d5b7b2802ef88e8d016a2eb9c7aeaa923529cd251ed0fe4608275d4105b6"},
 ]
 
 [package.extras]
@@ -840,13 +835,13 @@ dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "requests
 
 [[package]]
 name = "rdflib"
-version = "7.1.4"
+version = "7.2.1"
 description = "RDFLib is a Python library for working with RDF, a simple yet powerful language for representing information."
 optional = false
-python-versions = "<4.0.0,>=3.8.1"
+python-versions = ">=3.8.1"
 files = [
-    {file = "rdflib-7.1.4-py3-none-any.whl", hash = "sha256:72f4adb1990fa5241abd22ddaf36d7cafa5d91d9ff2ba13f3086d339b213d997"},
-    {file = "rdflib-7.1.4.tar.gz", hash = "sha256:fed46e24f26a788e2ab8e445f7077f00edcf95abb73bcef4b86cefa8b62dd174"},
+    {file = "rdflib-7.2.1-py3-none-any.whl", hash = "sha256:1a175bc1386a167a42fbfaba003bfa05c164a2a3ca3cb9c0c97f9c9638ca6ac2"},
+    {file = "rdflib-7.2.1.tar.gz", hash = "sha256:cf9b7fa25234e8925da8b1fb09700f8349b5f0f100e785fb4260e737308292ac"},
 ]
 
 [package.dependencies]
@@ -893,13 +888,13 @@ files = [
 
 [[package]]
 name = "types-html5lib"
-version = "1.1.11.20250809"
+version = "1.1.11.20250917"
 description = "Typing stubs for html5lib"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "types_html5lib-1.1.11.20250809-py3-none-any.whl", hash = "sha256:e5f48ab670ae4cdeafd88bbc47113d8126dcf08318e0b8d70df26ecc13eca9b6"},
-    {file = "types_html5lib-1.1.11.20250809.tar.gz", hash = "sha256:7976ec7426bb009997dc5e072bca3ed988dd747d0cbfe093c7dfbd3d5ec8bf57"},
+    {file = "types_html5lib-1.1.11.20250917-py3-none-any.whl", hash = "sha256:b294fd06d60da205daeb2f615485ca4d475088d2eff1009cf427f4a80fcd5346"},
+    {file = "types_html5lib-1.1.11.20250917.tar.gz", hash = "sha256:7b52743377f33f9b4fd7385afbd2d457b8864ee51f90ff2a795ad9e8c053373a"},
 ]
 
 [[package]]
@@ -969,4 +964,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "f55146b345db44af5b7a9f585415d46a05f3e9e2b4b9b914956c3bfcf8f2022d"
+content-hash = "d4cad46da66e0180d824180280e7333780a8cffe80293111e910086c53f12ba7"

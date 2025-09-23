@@ -10,18 +10,13 @@ packages = [{include = "mets_to_edm"}]
 [tool.poetry.dependencies]
 python = "^3.12"
 lxml = "^5.2.2"
-edmlib = { version = "^2.5.2", source = "edmlib" }
+edmlib = "^2.5.2"
 requests = "^2.32.3"
 types-lxml = "^2025.8.25"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 black = "^24.8.0"
-
-[[tool.poetry.source]]
-name = "edmlib"
-url = "https://git.kpool.at/api/v4/projects/359/packages/pypi/simple"
-priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]
