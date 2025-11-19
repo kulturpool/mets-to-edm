@@ -43,12 +43,20 @@ def retry_with_host_data(func: Callable[..., Any]) -> Callable[..., Any]:
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        if values := func(cls, dmd_sec=dmd_sec, *args, **kwargs):
+        values = func(cls, dmd_sec=dmd_sec, *args, **kwargs)
+
+        # Check if original result was already valid
+        if isinstance(values, dict):
+            if any(x for x in values.values()):
+                return values
+        elif values:
             return values
-        elif host_dmd_sec is not None:
+
+        # Retry with host dmd_sec
+        if host_dmd_sec is not None:
             return func(cls, dmd_sec=host_dmd_sec, *args, **kwargs)
-        else:
-            return []
+
+        return values
 
     return wrapper_retry_with_host_data
 
@@ -177,61 +185,56 @@ class MetsToEdmMapper:
         cls, dmd_sec: _Element, host_dmd_sec: Optional[_Element] = None
     ) -> Dict[str, List[Lit]]:
         title_properties = {"dcterms_alternative": [], "dc_title": []}
-        titles = dmd_sec.xpath(
-            "mods:titleInfo[not(@type)]", namespaces=METS_MODS_NAMESPACES
-        )
+        titles = dmd_sec.xpath("mods:titleInfo", namespaces=METS_MODS_NAMESPACES)
         for title_info in titles:
             title_type, title = cls.process_title_tag(title_info)
             title_properties[title_type].append(title)
+
+        # If no title try to create it from host volume and part
+        volume = None
+        issue = None
+        others = []
+        detail_numbers = dmd_sec.xpath(
+            "mods:part/mods:detail[mods:number]",
+            namespaces=METS_MODS_NAMESPACES,
+        )
+        for detail_number in detail_numbers:
+            number = detail_number.find(
+                "mods:number", namespaces=METS_MODS_NAMESPACES
+            ).text
+            if detail_number.get("type") == "volume":
+                volume = number
+            elif detail_number.get("type") == "issue":
+                issue = number
+            else:
+                others.append(number)
+
+        if volume and issue:
+            suffix = f"{volume}/{issue}"
+        else:
+            suffix = volume or issue or (others[0] if others else None)
+
+        # suffix = dmd_sec.xpath(
+        #    "mods:part/mods:detail/mods:number[1]/text()",
+        #    namespaces=METS_MODS_NAMESPACES,
+        # )
+        if not suffix:
+            date_suffix = dmd_sec.xpath(
+                "mods:part/mods:date[1]/text()", namespaces=METS_MODS_NAMESPACES
+            )
+            suffix = date_suffix[0] if date_suffix else None
+
+        if suffix and host_dmd_sec is not None:
+            for host_title_type, host_titles in cls.get_titles(host_dmd_sec).items():
+                for host_title in host_titles:
+                    title_properties[host_title_type].append(
+                        Lit(value=host_title.value + " " + suffix)
+                    )
 
         if (
             not title_properties["dcterms_alternative"]
             and not title_properties["dc_title"]
         ):
-            # If no title try to create it from host volume and part
-            volume = None
-            issue = None
-            others = []
-            detail_numbers = dmd_sec.xpath(
-                "mods:part/mods:detail[mods:number]",
-                namespaces=METS_MODS_NAMESPACES,
-            )
-            for detail_number in detail_numbers:
-                number = detail_number.find(
-                    "mods:number", namespaces=METS_MODS_NAMESPACES
-                ).text
-                if detail_number.get("type") == "volume":
-                    volume = number
-                elif detail_number.get("type") == "issue":
-                    issue = number
-                else:
-                    others.append(number)
-
-            if volume and issue:
-                suffix = f"{volume}/{issue}"
-            else:
-                suffix = volume or issue or (others[0] if others else None)
-
-            # suffix = dmd_sec.xpath(
-            #    "mods:part/mods:detail/mods:number[1]/text()",
-            #    namespaces=METS_MODS_NAMESPACES,
-            # )
-            if not suffix:
-                date_suffix = dmd_sec.xpath(
-                    "mods:part/mods:date[1]/text()", namespaces=METS_MODS_NAMESPACES
-                )
-                suffix = date_suffix[0] if date_suffix else None
-
-            if suffix and host_dmd_sec is not None:
-                for host_title_type, host_titles in cls.get_titles(
-                    host_dmd_sec
-                ).items():
-                    for host_title in host_titles:
-                        title_properties[host_title_type].append(
-                            Lit(value=host_title.value + " " + suffix)
-                        )
-                return title_properties
-
             # if still no title try the mets:mets/@LABEL as last resort
             mets_label = dmd_sec.xpath(
                 "/mets:mets/@LABEL", namespaces=METS_MODS_NAMESPACES
@@ -287,7 +290,9 @@ class MetsToEdmMapper:
                     pref_label = cls.process_title_tag(subject_subelement)[1]
                 elif subject_subelement.tag == mods_ns("name"):
                     person = cls.parse_mods_name(subject_subelement)
-                    if isinstance(person, EDM_Agent):
+                    if not person:
+                        continue
+                    elif isinstance(person, EDM_Agent):
                         context_objects[person.id.value] = person
                         edm_values[edm_property].append(person.id)
                         continue
@@ -447,30 +452,35 @@ class MetsToEdmMapper:
         )
 
     @classmethod
-    def parse_mods_name(cls, name_tag: _Element) -> Union[Lit, EDM_Agent]:
+    def parse_mods_name(cls, name_tag: _Element) -> Lit | EDM_Agent | None:
         uri = name_tag.get("valueURI")
         if not uri:
             uri = name_tag.get("nameIdentifier")
 
         # name
-        name = Lit(value=cls.get_full_name_from_name_tag(name_tag))
+        name = cls.get_full_name_from_name_tag(name_tag)
+        name_lit = Lit(value=name) if name else None
 
         # then do alternativeNames as well
         alt_names = [
-            Lit(value=cls.get_full_name_from_name_tag(alt_name_tag))
+            Lit(value=alt_name)
             for alt_name_tag in name_tag.findall(
                 "mods:alternativeName", namespaces=METS_MODS_NAMESPACES
             )
+            if (alt_name := cls.get_full_name_from_name_tag(alt_name_tag))
         ]
         # TODO: maybe also support altRepGroup in the future
 
-        if not alt_names and not uri:
-            return name
+        if not name_lit and not uri:
+            return None
+        elif not alt_names and not uri:
+            return name_lit
         else:
             if not uri:
                 uri = "agent"
+            name_lits = [name_lit] if name_lit else None
             return EDM_Agent(
-                id=Ref(value=uri), skos_prefLabel=[name], skos_altLabel=alt_names
+                id=Ref(value=uri), skos_prefLabel=name_lits, skos_altLabel=alt_names
             )
 
     @classmethod
@@ -492,6 +502,7 @@ class MetsToEdmMapper:
         return edm_property
 
     @classmethod
+    @retry_with_host_data
     def parse_mods_names(
         cls, dmd_sec: _Element, context_objects: CONTEXT_DICT_TYPE
     ) -> ModsNameResultsType:
@@ -504,6 +515,8 @@ class MetsToEdmMapper:
         }
         for name_tag in dmd_sec.findall("mods:name", namespaces=METS_MODS_NAMESPACES):
             literal_or_agent = cls.parse_mods_name(name_tag)
+            if not literal_or_agent:
+                continue
             name_value = literal_or_agent
             if isinstance(literal_or_agent, EDM_Agent):
                 context_objects[literal_or_agent.id.value] = literal_or_agent
@@ -798,7 +811,9 @@ class MetsToEdmMapper:
 
         from_mods_subject = cls.parse_mods_subjects(dmd_sec, context_objects)
 
-        from_mods_name = cls.parse_mods_names(dmd_sec, context_objects)
+        from_mods_name = cls.parse_mods_names(
+            dmd_sec=dmd_sec, host_dmd_sec=host_dmd_sec, context_objects=context_objects
+        )
 
         cho = EDM_ProvidedCHO(
             id=Ref(value="1"),  # TODO: id
@@ -818,7 +833,7 @@ class MetsToEdmMapper:
             dc_identifier=cls.get_identifiers(dmd_sec),
             dcterms_medium=cls.get_mediums(dmd_sec),
             dcterms_extent=cls.get_extent(dmd_sec),
-            dc_publisher=cls.get_publishers(dmd_sec, host_dmd_sec=host_dmd_sec)
+            dc_publisher=cls.get_publishers(dmd_sec=dmd_sec, host_dmd_sec=host_dmd_sec)
             + from_mods_name["dc_publisher"],
             dc_creator=from_mods_name["dc_creator"],
             dc_contributor=from_mods_name["dc_contributor"],
