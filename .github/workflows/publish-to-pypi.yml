@@ -1,0 +1,24 @@
+name: Publish to PyPI
+
+on: 
+  push:
+    tags: 
+      - "*.*.*"
+  workflow_dispatch:
+    
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    container: 
+      image: registry.kpool.at/kulturpool/development-operations/ci-cd/docker-images/poetry-packaging/poetry-packaging:1.1.1 
+      credentials:
+        username: ${{ vars.GITLAB_PACKAGING_REGISTRY_TOKEN_USER }}
+        password: ${{ secrets.GITLAB_PACKAGING_REGISTRY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+      - run: poetry build
+      - run: poetry publish
