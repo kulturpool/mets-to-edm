@@ -182,7 +182,10 @@ class MetsToEdmMapper:
 
     @classmethod
     def get_titles(
-        cls, dmd_sec: _Element, host_dmd_sec: Optional[_Element] = None
+        cls,
+        dmd_sec: _Element,
+        host_dmd_sec: Optional[_Element] = None,
+        fallback_to_mets_label: bool = True,
     ) -> Dict[str, List[Lit]]:
         title_properties = {"dcterms_alternative": [], "dc_title": []}
         titles = dmd_sec.xpath("mods:titleInfo", namespaces=METS_MODS_NAMESPACES)
@@ -225,7 +228,9 @@ class MetsToEdmMapper:
             suffix = date_suffix[0] if date_suffix else None
 
         if suffix and host_dmd_sec is not None:
-            for host_title_type, host_titles in cls.get_titles(host_dmd_sec).items():
+            for host_title_type, host_titles in cls.get_titles(
+                host_dmd_sec, fallback_to_mets_label=False
+            ).items():
                 for host_title in host_titles:
                     title_properties[host_title_type].append(
                         Lit(value=host_title.value + " " + suffix)
@@ -234,12 +239,14 @@ class MetsToEdmMapper:
         if (
             not title_properties["dcterms_alternative"]
             and not title_properties["dc_title"]
+            and fallback_to_mets_label
         ):
             # if still no title try the mets:mets/@LABEL as last resort
             mets_label = dmd_sec.xpath(
                 "/mets:mets/@LABEL", namespaces=METS_MODS_NAMESPACES
-            )[0]
+            )
             if suffix and mets_label:
+                mets_label = mets_label[0]
                 title_properties["dc_title"].append(
                     Lit(value=mets_label + " " + suffix)
                 )
