@@ -243,7 +243,7 @@ class MetsToEdmMapper:
         ):
             # if still no title try the mets:mets/@LABEL as last resort
             mets_label = dmd_sec.xpath(
-                "/mets:mets/@LABEL", namespaces=METS_MODS_NAMESPACES
+                "//mets:mets/@LABEL", namespaces=METS_MODS_NAMESPACES
             )
             if suffix and mets_label:
                 mets_label = mets_label[0]
