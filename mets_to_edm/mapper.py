@@ -628,6 +628,10 @@ class MetsToEdmMapper:
         return Lit(value=full_location) if full_location else None
 
     @classmethod
+    def get_dc_rights(cls, dmd_sec: _Element) -> Optional[MixedValuesList]:
+        return []
+
+    @classmethod
     def get_iiif_image_api_service(cls, url: str) -> Optional[SVCS_Service]:
         """Override in Institution specific implementation to generate the SVCS_Service object from a given url
 
@@ -850,6 +854,7 @@ class MetsToEdmMapper:
             dcterms_isPartOf=cls.get_is_part_of(dmd_sec),
             dcterms_isReferencedBy=cls.get_referenced_by(dmd_sec, context_objects),
             edm_currentLocation=cls.get_current_location(dmd_sec),
+            dc_rights=cls.get_dc_rights(dmd_sec),
         )
 
         provider = cls.get_provider(default=edm_provider)
