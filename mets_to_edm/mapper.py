@@ -628,6 +628,10 @@ class MetsToEdmMapper:
         return Lit(value=full_location) if full_location else None
 
     @classmethod
+    def get_provenance(cls, dmd_sec: _Element) -> Optional[MixedValuesList]:
+        return []
+
+    @classmethod
     def get_dc_rights(cls, dmd_sec: _Element) -> Optional[MixedValuesList]:
         return []
 
@@ -848,7 +852,8 @@ class MetsToEdmMapper:
             + from_mods_name["dc_publisher"],
             dc_creator=from_mods_name["dc_creator"],
             dc_contributor=from_mods_name["dc_contributor"],
-            dcterms_provenance=from_mods_name["dcterms_provenance"],
+            dcterms_provenance=from_mods_name["dcterms_provenance"]
+            + cls.get_provenance(dmd_sec),
             dcterms_issued=cls.get_issued(dmd_sec),
             dcterms_created=cls.get_created(dmd_sec),
             dcterms_isPartOf=cls.get_is_part_of(dmd_sec),
