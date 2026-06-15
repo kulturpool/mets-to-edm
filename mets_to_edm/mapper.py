@@ -361,10 +361,13 @@ class MetsToEdmMapper:
         intranda_spatials = literal_list_from_xpath(
             dmd_sec, "mods:extension/intranda:TopicRoom"
         )
+        intranda_places = literal_list_from_xpath(
+            dmd_sec, "mods:extension/intranda:place"
+        )
         origin_places = literal_list_from_xpath(
             dmd_sec, "mods:originInfo/mods:place/mods:placeTerm[@type='text']"
         )
-        return intranda_spatials + origin_places
+        return intranda_spatials + intranda_places + origin_places
 
     @classmethod
     def get_mediums(cls, dmd_sec: _Element) -> MixedValuesList:
