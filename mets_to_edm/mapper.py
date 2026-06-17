@@ -304,7 +304,8 @@ class MetsToEdmMapper:
                         edm_values[edm_property].append(person.id)
                         continue
                     else:
-                        pref_label = Lit(value=person.value)
+                        edm_values[edm_property].append(person)
+                        continue
                 else:
                     pref_label = Lit(value=subject_subelement.text)
 
@@ -462,7 +463,7 @@ class MetsToEdmMapper:
         )
 
     @classmethod
-    def parse_mods_name(cls, name_tag: _Element) -> Lit | EDM_Agent | None:
+    def parse_mods_name(cls, name_tag: _Element) -> Lit | Ref | EDM_Agent | None:
         uri = name_tag.get("valueURI")
         if not uri:
             uri = name_tag.get("nameIdentifier")
