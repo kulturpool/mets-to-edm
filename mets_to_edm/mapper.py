@@ -76,6 +76,7 @@ class MetsToEdmMapper:
         # TODO: maybe also support hierarchicalGeographic, cartographics, geographicCode, occupation
     }
     CREATOR_ROLES = ["aut", "cmp", "art", "pht", "edt"]
+    RIGHTS_ROLES = ["cph", "cpc"]
     PUBLISHER_ROLES = ["pbl", "isb"]
     SUBJECT_ROLES = ["rcp"]
     OTHER_ROLES = [
@@ -151,10 +152,12 @@ class MetsToEdmMapper:
 
     @classmethod
     def get_amd_part(cls, record: _Element, amdid: str) -> list[_Element]:
-        return record.xpath(
+        amd_secs = record.xpath(
             f"mets:amdSec[@ID='{amdid}'][1]",
             namespaces=METS_MODS_NAMESPACES,
         )
+        assert len(amd_secs) == 1, f"amdsec not found or multiples for id {amdid}"
+        return amd_secs[0]
 
     @classmethod
     def process_title_tag(cls, title_element: _Element) -> tuple[str, Lit]:
@@ -255,6 +258,8 @@ class MetsToEdmMapper:
     @classmethod
     def get_descriptions(cls, dmd_sec: _Element) -> MixedValuesList:
         def note_string_extract(tag: _Element):
+            if not tag.text:
+                return None
             output = ""
             if tag.get("type"):
                 output += tag.get("type") + ": "
@@ -502,6 +507,8 @@ class MetsToEdmMapper:
                 return None
             elif role_entry in cls.CREATOR_ROLES:
                 return "dc_creator"
+            elif role_entry in cls.RIGHTS_ROLES:
+                edm_property = "dc_rights"
             elif role_entry in cls.PUBLISHER_ROLES:
                 edm_property = "dc_publisher"
             elif role_entry in cls.SUBJECT_ROLES:
@@ -523,6 +530,7 @@ class MetsToEdmMapper:
             "dc_contributor": [],
             "dcterms_provenance": [],
             "dc_subject": [],
+            "dc_rights": [],
         }
         for name_tag in dmd_sec.findall("mods:name", namespaces=METS_MODS_NAMESPACES):
             literal_or_agent = cls.parse_mods_name(name_tag)
@@ -729,6 +737,7 @@ class MetsToEdmMapper:
         logical_div: _Element,
         file_sec: _Element,
         context_objects: CONTEXT_DICT_TYPE,
+        dmd_sec: _Element,
     ) -> Dict[str, Any]:
         results = {
             "edm_hasView": [],
@@ -806,10 +815,7 @@ class MetsToEdmMapper:
         host_dmd_sec = cls.get_host_dmd_sec(record, dmd_sec, logical_main_div)
 
         amd_sec = cls.get_amd_part(record, amdid=logical_main_div.get("ADMID"))
-        assert (
-            len(amd_sec) == 1
-        ), f'amdsec not found or multiples for id {logical_main_div.get("ADMID")}'
-        amd_sec = amd_sec[0]
+
         physical_main_div = record.find(
             "mets:structMap[@TYPE='PHYSICAL']/mets:div",  # [@TYPE='physSequence']",
             namespaces=METS_MODS_NAMESPACES,
@@ -863,7 +869,7 @@ class MetsToEdmMapper:
             dcterms_isPartOf=cls.get_is_part_of(dmd_sec),
             dcterms_isReferencedBy=cls.get_referenced_by(dmd_sec, context_objects),
             edm_currentLocation=cls.get_current_location(dmd_sec),
-            dc_rights=cls.get_dc_rights(dmd_sec),
+            dc_rights=cls.get_dc_rights(dmd_sec) + from_mods_name["dc_rights"],
         )
 
         provider = cls.get_provider(default=edm_provider)
@@ -876,7 +882,12 @@ class MetsToEdmMapper:
             ),
             edm_provider=provider,
             **cls.get_webresource_urls(
-                amd_sec, physical_main_div, logical_main_div, filesec, context_objects
+                amd_sec,
+                physical_main_div,
+                logical_main_div,
+                filesec,
+                context_objects,
+                dmd_sec,
             ),
         )
 

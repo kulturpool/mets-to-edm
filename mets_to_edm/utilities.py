@@ -79,10 +79,15 @@ def literal_list_from_xpath(
 ):
     return [
         Lit(
-            value=string_extract_function(tag) if string_extract_function else tag.text,
+            value=extracted,
             lang=tag.get("lang"),
         )
         for tag in element.xpath(xpath_query, namespaces=METS_MODS_NAMESPACES)
+        if (
+            extracted := (
+                string_extract_function(tag) if string_extract_function else tag.text
+            )
+        )
     ]
 
 
