@@ -54,8 +54,9 @@ python -m mets_to_edm example.xml "Provider Name" [--data-provider "Data Provide
 
 ## Customizing the Mapping
 
-To change how specific fields are mapped, subclass `MetsToEdmMapper` and override the relevant class methods. For example, to change how titles are extracted:
-You can override any method such as:
+To change how specific fields are mapped, subclass `MetsToEdmMapper` and override the relevant class methods.
+For example, you can override any method such as:
+
 - `get_titles`
 - `get_descriptions`
 - `get_publishers`
@@ -72,7 +73,38 @@ class MyMapper(MetsToEdmMapper):
 		return "My Custom Data Provider"
 
 # Usage:
-# edmlib_record = MyCustomMapper.process_record(tree)
+# edmlib_record = MyMapper.process_record(tree)
+```
+
+### Example: Including all URLs for IIIF Resources
+
+By default, only the first image URL is included if an IIIF manifest is present. To include all URLs, you can override the relevant mapping method or adjust the `only_first_image_if_iiif_manifest` parameter.
+
+```python
+class MyMapper(MetsToEdmMapper):
+    @classmethod
+    def get_webresource_urls(
+        cls,
+        amd_sec,
+        physical_div,
+        logical_div,
+        file_sec,
+        context_objects,
+        dmd_sec,
+        only_first_image_if_iiif_manifest=True,
+    ):
+        return super().get_webresource_urls(
+            amd_sec,
+            physical_div,
+            logical_div,
+            file_sec,
+            context_objects,
+            dmd_sec,
+            only_first_image_if_iiif_manifest=False,
+        )
+
+# Usage:
+# edmlib_record = MyMapper.process_record(tree)
 ```
 
 For more examples have a look at the examples directory.

@@ -738,6 +738,7 @@ class MetsToEdmMapper:
         file_sec: _Element,
         context_objects: CONTEXT_DICT_TYPE,
         dmd_sec: _Element,
+        only_first_image_if_iiif_manifest: bool = True,
     ) -> Dict[str, Any]:
         results = {
             "edm_hasView": [],
@@ -754,6 +755,9 @@ class MetsToEdmMapper:
             urls.append(edm_object.value)
 
         iiif_manifest = cls.get_iiif_manifest_url(amd_sec)
+
+        if iiif_manifest and only_first_image_if_iiif_manifest:
+            urls = urls[:1]
 
         first = True
         for url in urls:

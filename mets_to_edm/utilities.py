@@ -54,7 +54,7 @@ ModsNameResultsType = TypedDict(
 
 
 def xpath_first_match(element: _Element, xpath_query):
-    if not element:
+    if element is None:
         return None
     results = element.xpath(xpath_query, namespaces=METS_MODS_NAMESPACES)
     return results[0] if results else None
