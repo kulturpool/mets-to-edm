@@ -75,7 +75,7 @@ class MetsToEdmMapper:
         mods_ns("occupation"): (None, None),
         # TODO: maybe also support hierarchicalGeographic, cartographics, geographicCode, occupation
     }
-    CREATOR_ROLES = ["aut", "cmp", "art", "pht", "edt"]
+    CREATOR_ROLES = ["cre", "aut", "cmp", "art", "pht", "edt"]
     RIGHTS_ROLES = ["cph", "cpc"]
     PUBLISHER_ROLES = ["pbl", "isb"]
     SUBJECT_ROLES = ["rcp"]
